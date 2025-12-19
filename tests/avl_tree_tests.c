@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
-
+#include <stdlib.h>
 #include "avl_tree.h"
 #include "test_framework.h"
 
@@ -253,6 +253,7 @@ TEST_CASE(test_structure_traversal) {
 }
 
 int main(void) {
+    system("chcp 65001 > nul");  // Windows 下设置 UTF-8 编码页以支持中文输出
 static const TestCase avl_basic_cases[] = {
     TEST_ENTRY(test_insert_and_traversal),
     TEST_ENTRY(test_removals),
@@ -265,5 +266,7 @@ static const TestCase avl_basic_cases[] = {
         DESCRIBE_ENTRY("AVL 树基础行为", avl_basic_cases),
     };
 
-    return test_framework_run_suites(suites, sizeof(suites) / sizeof(suites[0]));
+    int res =  test_framework_run_suites(suites, sizeof(suites) / sizeof(suites[0]));
+    system("pause");
+    return res;
 }

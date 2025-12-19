@@ -43,6 +43,7 @@ static int random_in_range(int min, int max);
 static const char* color_for_depth(size_t depth);
 
 int main(void) {
+    system("chcp 65001 > nul");  // Windows 下设置 UTF-8 编码页以支持中文输出
     AvlTree* tree = avl_tree_create();
     if (!tree) {
         fprintf(stderr, "创建 AVL 树失败，内存不足。\n");
