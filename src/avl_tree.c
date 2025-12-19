@@ -3,15 +3,15 @@
 #include <stdlib.h>
 
 typedef struct Node {
-    int value;
-    int height;
-    struct Node* left;
-    struct Node* right;
+    int value;          /* 节点存储的关键字 */
+    int height;         /* 当前节点为根的子树高度 */
+    struct Node* left;  /* 左子树指针 */
+    struct Node* right; /* 右子树指针 */
 } Node;
 
 struct AvlTree {
-    Node* root;
-    size_t size;
+    Node* root;   /* 根节点指针 */
+    size_t size;  /* 树中元素数量 */
 };
 
 static Node* node_create(int value);
@@ -30,6 +30,7 @@ static void inorder_traverse(const Node* node, int* out_values, size_t max_len, 
 static void traverse_structure(const Node* node, size_t depth, size_t position,
                                AvlTreeChildType child_type, AvlTreeVisitFn visitor, void* user_data);
 
+/* 构造一棵空的 AVL 树 */
 AvlTree* avl_tree_create(void) {
     AvlTree* tree = (AvlTree*)malloc(sizeof(AvlTree));
     if (!tree) {
@@ -40,6 +41,7 @@ AvlTree* avl_tree_create(void) {
     return tree;
 }
 
+/* 释放整棵树占用的内存 */
 void avl_tree_destroy(AvlTree* tree) {
     if (!tree) {
         return;
@@ -48,6 +50,7 @@ void avl_tree_destroy(AvlTree* tree) {
     free(tree);
 }
 
+/* 插入指定值，返回 1 表示新增，0 表示重复，-1 表示失败 */
 int avl_tree_insert(AvlTree* tree, int value) {
     if (!tree) {
         return -1;
@@ -65,6 +68,7 @@ int avl_tree_insert(AvlTree* tree, int value) {
     return status;
 }
 
+/* 删除指定值，返回 1 成功，0 未找到 */
 int avl_tree_remove(AvlTree* tree, int value) {
     if (!tree) {
         return 0;
@@ -79,6 +83,7 @@ int avl_tree_remove(AvlTree* tree, int value) {
     return status;
 }
 
+/* 判断树中是否存在给定值 */
 int avl_tree_contains(const AvlTree* tree, int value) {
     if (!tree) {
         return 0;
@@ -86,14 +91,17 @@ int avl_tree_contains(const AvlTree* tree, int value) {
     return node_contains(tree->root, value);
 }
 
+/* 返回当前元素数量 */
 size_t avl_tree_size(const AvlTree* tree) {
     return tree ? tree->size : 0U;
 }
 
+/* 判断树是否为空 */
 int avl_tree_empty(const AvlTree* tree) {
     return (tree == NULL) || (tree->size == 0U);
 }
 
+/* 中序遍历并写入外部缓冲区 */
 size_t avl_tree_in_order(const AvlTree* tree, int* out_values, size_t max_len) {
     if (!tree || !out_values || max_len == 0U) {
         return 0U;
@@ -103,6 +111,7 @@ size_t avl_tree_in_order(const AvlTree* tree, int* out_values, size_t max_len) {
     return count;
 }
 
+/* 结构化遍历：以前序顺序回调每个节点 */
 void avl_tree_traverse_structure(const AvlTree* tree, AvlTreeVisitFn visitor, void* user_data) {
     if (!tree || !visitor || !tree->root) {
         return;
@@ -110,6 +119,7 @@ void avl_tree_traverse_structure(const AvlTree* tree, AvlTreeVisitFn visitor, vo
     traverse_structure(tree->root, 0U, 0U, AVL_CHILD_ROOT, visitor, user_data);
 }
 
+/* 分配并初始化一个节点 */
 static Node* node_create(int value) {
     Node* node = (Node*)malloc(sizeof(Node));
     if (!node) {
@@ -122,6 +132,7 @@ static Node* node_create(int value) {
     return node;
 }
 
+/* 后序遍历释放节点 */
 static void node_destroy(Node* node) {
     if (!node) {
         return;
@@ -131,10 +142,12 @@ static void node_destroy(Node* node) {
     free(node);
 }
 
+/* 返回节点高度，空指针视为高度 0 */
 static int node_height(const Node* node) {
     return node ? node->height : 0;
 }
 
+/* 依据左右子树高度更新当前节点高度 */
 static void update_height(Node* node) {
     if (!node) {
         return;
@@ -144,6 +157,7 @@ static void update_height(Node* node) {
     node->height = (left_height > right_height ? left_height : right_height) + 1;
 }
 
+/* 计算平衡因子（左高-右高） */
 static int balance_factor(const Node* node) {
     if (!node) {
         return 0;
@@ -151,6 +165,7 @@ static int balance_factor(const Node* node) {
     return node_height(node->left) - node_height(node->right);
 }
 
+/* 左旋以恢复平衡 */
 static Node* rotate_left(Node* node) {
     Node* new_root = node->right;
     Node* moved_subtree = new_root->left;
@@ -161,6 +176,7 @@ static Node* rotate_left(Node* node) {
     return new_root;
 }
 
+/* 右旋以恢复平衡 */
 static Node* rotate_right(Node* node) {
     Node* new_root = node->left;
     Node* moved_subtree = new_root->right;
@@ -171,6 +187,7 @@ static Node* rotate_right(Node* node) {
     return new_root;
 }
 
+/* 根据平衡因子决定是否执行旋转 */
 static Node* rebalance(Node* node) {
     int balance = balance_factor(node);
     if (balance > 1) {
@@ -188,6 +205,7 @@ static Node* rebalance(Node* node) {
     return node;
 }
 
+/* 递归插入并在回溯阶段保持平衡 */
 static Node* node_insert(Node* node, int value, int* status) {
     if (!status) {
         return node;
@@ -234,6 +252,7 @@ static Node* node_insert(Node* node, int value, int* status) {
     return node;
 }
 
+/* 递归删除并维护平衡 */
 static Node* node_remove(Node* node, int value, int* status) {
     if (!status) {
         return node;
@@ -271,6 +290,7 @@ static Node* node_remove(Node* node, int value, int* status) {
     return rebalance(node);
 }
 
+/* 查找以 node 为根的最小值节点 */
 static Node* find_min(Node* node) {
     while (node && node->left) {
         node = node->left;
@@ -278,6 +298,7 @@ static Node* find_min(Node* node) {
     return node;
 }
 
+/* 在 BST 中递归搜索指定值 */
 static int node_contains(const Node* node, int value) {
     if (!node) {
         return 0;
@@ -291,6 +312,7 @@ static int node_contains(const Node* node, int value) {
     return node_contains(node->right, value);
 }
 
+/* 中序遍历节点并写入缓冲区 */
 static void inorder_traverse(const Node* node, int* out_values, size_t max_len, size_t* count) {
     if (!node || !out_values || !count || *count >= max_len) {
         return;
@@ -305,6 +327,7 @@ static void inorder_traverse(const Node* node, int* out_values, size_t max_len, 
     inorder_traverse(node->right, out_values, max_len, count);
 }
 
+/* 前序遍历，携带深度与层内序号，供可视化使用 */
 static void traverse_structure(const Node* node, size_t depth, size_t position,
                                AvlTreeChildType child_type, AvlTreeVisitFn visitor, void* user_data) {
     if (!node || !visitor) {
