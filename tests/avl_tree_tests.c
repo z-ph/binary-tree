@@ -156,6 +156,58 @@ static void structure_collect_callback(int value, size_t depth, size_t position,
     slot->type = type;
 }
 
+TEST_CASE(test_null_inputs_and_empty_tree) {
+    TEST_ARRANGE("验证空树与 NULL 参数路径");
+    AvlTree* tree = avl_tree_create();
+    REQUIRE(tree != NULL);
+    test_log_info("DATA", "针对 NULL 树/空树执行各种操作以触发保护逻辑");
+
+    TEST_ACTION("调用所有 API 的边界条件");
+    int buffer[4] = {0};
+    size_t count_null_tree = avl_tree_in_order(NULL, buffer, 4);
+    size_t count_null_buffer = avl_tree_in_order(tree, NULL, 4);
+    size_t count_zero_len = avl_tree_in_order(tree, buffer, 0U);
+    int insert_null = avl_tree_insert(NULL, 1);
+    int remove_null = avl_tree_remove(NULL, 1);
+    int contains_null = avl_tree_contains(NULL, 1);
+    size_t size_null = avl_tree_size(NULL);
+    int empty_null = avl_tree_empty(NULL);
+    int remove_missing = avl_tree_remove(tree, 123);
+    int contains_missing = avl_tree_contains(tree, 123);
+    size_t size_empty = avl_tree_size(tree);
+    int empty_tree = avl_tree_empty(tree);
+
+    NodeCapture captures[4] = {0};
+    CaptureContext ctx = {
+        .entries = captures,
+        .capacity = 4,
+        .count = 0U,
+    };
+    avl_tree_traverse_structure(tree, structure_collect_callback, &ctx);
+    avl_tree_traverse_structure(NULL, structure_collect_callback, &ctx);
+    avl_tree_traverse_structure(tree, NULL, NULL);
+
+    TEST_ASSERT("检查所有边界返回值");
+    REQUIRE_EQ(0U, count_null_tree);
+    REQUIRE_EQ(0U, count_null_buffer);
+    REQUIRE_EQ(0U, count_zero_len);
+    REQUIRE_EQ(-1, insert_null);
+    REQUIRE_EQ(0, remove_null);
+    REQUIRE_EQ(0, contains_null);
+    REQUIRE_EQ(0U, size_null);
+    REQUIRE_EQ(1, empty_null);
+    REQUIRE_EQ(0, remove_missing);
+    REQUIRE_EQ(0, contains_missing);
+    REQUIRE_EQ(0U, size_empty);
+    REQUIRE_EQ(1, empty_tree);
+    REQUIRE_EQ(0U, ctx.count);
+    test_log_info("RESULT",
+                  "NULL 输入与空树操作均返回 0 或安全值，遍历未触发任何回调（ctx.count=0）");
+
+    avl_tree_destroy(tree);
+    avl_tree_destroy(NULL);
+}
+
 TEST_CASE(test_structure_traversal) {
     AvlTree* tree = avl_tree_create();
     REQUIRE(tree != NULL);
@@ -201,12 +253,13 @@ TEST_CASE(test_structure_traversal) {
 }
 
 int main(void) {
-    static const TestCase avl_basic_cases[] = {
-        TEST_ENTRY(test_insert_and_traversal),
-        TEST_ENTRY(test_removals),
-        TEST_ENTRY(test_inorder_buffer_limit),
-        TEST_ENTRY(test_structure_traversal),
-    };
+static const TestCase avl_basic_cases[] = {
+    TEST_ENTRY(test_insert_and_traversal),
+    TEST_ENTRY(test_removals),
+    TEST_ENTRY(test_inorder_buffer_limit),
+    TEST_ENTRY(test_null_inputs_and_empty_tree),
+    TEST_ENTRY(test_structure_traversal),
+};
 
     static const DescribeCase suites[] = {
         DESCRIBE_ENTRY("AVL 树基础行为", avl_basic_cases),
