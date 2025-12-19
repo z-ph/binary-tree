@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdio.h>
 
 #include "avl_tree.h"
 #include "test_framework.h"
@@ -9,6 +10,7 @@ TEST_CASE(test_insert_and_traversal) {
     REQUIRE(tree != NULL);
     REQUIRE(avl_tree_empty(tree) == 1);
     int values[4] = {0};
+    test_log_info("DATA", "插入序列: [10,10,5,15]，遍历缓冲区大小=4");
 
     TEST_ACTION("插入多个节点并执行中序遍历");
     int status_insert_10 = avl_tree_insert(tree, 10);
@@ -32,6 +34,11 @@ TEST_CASE(test_insert_and_traversal) {
     REQUIRE(values[0] == 5);
     REQUIRE(values[1] == 10);
     REQUIRE(values[2] == 15);
+    char result_summary[160];
+    snprintf(result_summary, sizeof(result_summary),
+             "结果: 插入状态=(%d,%d,%d,%d)，长度=%zu，中序输出=[%d,%d,%d]", status_insert_10, status_insert_dup,
+             status_insert_5, status_insert_15, size_after_insert, values[0], values[1], values[2]);
+    test_log_info("RESULT", result_summary);
 
     avl_tree_destroy(tree);
 }
@@ -46,6 +53,7 @@ TEST_CASE(test_removals) {
         REQUIRE_EQ(1, avl_tree_insert(tree, items[i]));
     }
     REQUIRE_EQ(item_count, avl_tree_size(tree));
+    test_log_info("DATA", "初始节点序列: [30,20,40,10,25,35,50,5,15]");
 
     TEST_ACTION("删除不同位置的节点并最终清空");
     int remove_20 = avl_tree_remove(tree, 20);  // 删除拥有两个子节点的节点
@@ -82,6 +90,11 @@ TEST_CASE(test_removals) {
     REQUIRE(traversal_positive == 1);
     REQUIRE(removal_loop_success == 1);
     REQUIRE_EQ(0U, final_size);
+    char removal_summary[256];
+    snprintf(removal_summary, sizeof(removal_summary),
+             "删除流程: remove20=%d(contains=%d,size=%zu), remove5=%d, remove30=%d, remove999=%d, 最终大小=%zu",
+             remove_20, contains_20, size_after_remove_20, remove_leaf, remove_root, remove_missing, final_size);
+    test_log_info("RESULT", removal_summary);
 
     avl_tree_destroy(tree);
 }
@@ -90,6 +103,7 @@ TEST_CASE(test_inorder_buffer_limit) {
     TEST_ARRANGE("创建空树准备写入大量顺序节点");
     AvlTree* tree = avl_tree_create();
     REQUIRE(tree != NULL);
+    test_log_info("DATA", "插入升序范围 [0,9]，遍历缓冲区大小=4");
 
     TEST_ACTION("插入升序数据并读取有限缓冲区");
     int insert_status = 1;
@@ -108,6 +122,10 @@ TEST_CASE(test_inorder_buffer_limit) {
     for (size_t i = 0; i < count; ++i) {
         REQUIRE(buffer[i] == (int)i);
     }
+    char buffer_summary[128];
+    snprintf(buffer_summary, sizeof(buffer_summary), "读取了 %zu 个元素，缓冲区内容=[%d,%d,%d,%d]", count, buffer[0], buffer[1],
+             buffer[2], buffer[3]);
+    test_log_info("RESULT", buffer_summary);
 
     avl_tree_destroy(tree);
 }
@@ -145,6 +163,7 @@ TEST_CASE(test_structure_traversal) {
     for (size_t i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
         REQUIRE_EQ(1, avl_tree_insert(tree, values[i]));
     }
+    test_log_info("DATA", "插入序列: [8,4,12,2,6,10,14]，验证结构遍历输出");
     NodeCapture captures[16] = {0};
     CaptureContext ctx = {
         .entries = captures,
@@ -169,6 +188,15 @@ TEST_CASE(test_structure_traversal) {
     REQUIRE(captures[4].value == 12);
     REQUIRE(captures[4].type == AVL_CHILD_RIGHT);
     REQUIRE(captures[4].position == 1U);
+    char structure_summary[200];
+    snprintf(structure_summary, sizeof(structure_summary),
+             "捕获节点数=%zu，前五项=[(v=%d,d=%zu,pos=%zu),(v=%d,d=%zu,pos=%zu),(v=%d,d=%zu,pos=%zu),"
+             "(v=%d,d=%zu,pos=%zu),(v=%d,d=%zu,pos=%zu)]",
+             ctx.count, captures[0].value, captures[0].depth, captures[0].position, captures[1].value,
+             captures[1].depth, captures[1].position, captures[2].value, captures[2].depth, captures[2].position,
+             captures[3].value, captures[3].depth, captures[3].position, captures[4].value, captures[4].depth,
+             captures[4].position);
+    test_log_info("RESULT", structure_summary);
     avl_tree_destroy(tree);
 }
 

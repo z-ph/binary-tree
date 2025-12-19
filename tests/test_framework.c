@@ -132,10 +132,12 @@ static void run_suite(const DescribeCase* suite, size_t* total_passed, size_t* t
             ++suite_failed;
             ++(*total_failed);
             test_log_error("FAILED", test->name ? test->name : "(匿名用例)");
+            printf("测试用例: %s | 测试结果: 失败\n", test->name ? test->name : "(匿名用例)");
         } else {
             ++suite_passed;
             ++(*total_passed);
             test_log_success("OK", test->name ? test->name : "(匿名用例)");
+            printf("测试用例: %s | 测试结果: 通过\n", test->name ? test->name : "(匿名用例)");
         }
         test_log_divider();
     }
